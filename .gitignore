@@ -1,0 +1,11 @@
+.vscode/
+dist
+node_modules
+out
+.DS_Store
+.env
+.env.*
+
+# Claude
+.claude
+CLAUDE.md

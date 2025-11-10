@@ -1,0 +1,41 @@
+name: "rona"
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      postgres:
+        restart: false
+        condition: service_healthy
+    environment:
+      - TOKEN=${TOKEN}
+      - POSTGRES_URL=postgresql://postgres:password@postgres/postgres
+  db-migrate:
+    build:
+      context: .
+      target: migration
+    depends_on:
+      postgres:
+        restart: false
+        condition: service_healthy
+    environment:
+      - POSTGRES_URL=postgresql://postgres:password@postgres/postgres
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    volumes:
+      - postgres:/var/lib/postgresql
+    environment:
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/var/lib/postgresql/17/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+volumes:
+  postgres:
