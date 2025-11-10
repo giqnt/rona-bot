@@ -1,6 +1,6 @@
 import { inlineCode, roleMention, userMention, Collection, strikethrough, bold, underline } from "discord.js";
 import type { Guild, GuildBasedChannel, GuildMember, Message, MessageReactionResolvable, ReactionManager, Role, SendableChannels, User } from "discord.js";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { config } from "config";
 import type { BotService } from "service";
 import type { Bot } from "structure/Bot";
@@ -40,7 +40,43 @@ export class VoteService implements BotService {
     public constructor(private readonly bot: Bot) {}
 
     public async init(): Promise<void> {
-        // Initialization logic for the vote service
+        const nameVotesData = await db.select().from(nameVotesTable)
+            .where(eq(nameVotesTable.hasEnded, false))
+            .orderBy(asc(nameVotesTable.startedAt));
+        let now = Date.now();
+        for (const nameVoteData of nameVotesData) {
+            const expiresAt = nameVoteData.startedAt.getTime() + config.vote.expirationTimeMs;
+            if (now >= expiresAt) {
+                this.endVote("name", nameVoteData.messageId).catch((error: unknown) => {
+                    logger.error(error, `Failed to end vote for message ${nameVoteData.messageId} on init`);
+                });
+            } else {
+                this.timeoutMap.set(nameVoteData.messageId, setTimeout(() => {
+                    this.endVote("name", nameVoteData.messageId).catch((error: unknown) => {
+                        logger.error(error, `Failed to end vote for message ${nameVoteData.messageId} on expiration`);
+                    });
+                }, expiresAt - now));
+            }
+        }
+
+        const roleVotesData = await db.select().from(roleVotesTable)
+            .where(eq(roleVotesTable.hasEnded, false))
+            .orderBy(asc(roleVotesTable.startedAt));
+        now = Date.now();
+        for (const roleVoteData of roleVotesData) {
+            const expiresAt = roleVoteData.startedAt.getTime() + config.vote.expirationTimeMs;
+            if (now >= expiresAt) {
+                this.endVote("role", roleVoteData.messageId).catch((error: unknown) => {
+                    logger.error(error, `Failed to end vote for message ${roleVoteData.messageId} on init`);
+                });
+            } else {
+                this.timeoutMap.set(roleVoteData.messageId, setTimeout(() => {
+                    this.endVote("role", roleVoteData.messageId).catch((error: unknown) => {
+                        logger.error(error, `Failed to end vote for message ${roleVoteData.messageId} on expiration`);
+                    });
+                }, expiresAt - now));
+            }
+        }
     }
 
     /**
