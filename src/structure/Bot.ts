@@ -8,13 +8,13 @@ import { logger } from "utils/logger";
 import { buildServices } from "service";
 
 export class Bot<Ready extends boolean = boolean> {
-    private _client: Client;
+    public readonly client: Client<Ready>;
     private _terminating = false;
     public readonly services;
     private handlerRegistry?: HandlerRegistry;
 
     public constructor() {
-        this._client = new Client({
+        this.client = new Client({
             intents: [
                 GatewayIntentBits.Guilds,
                 GatewayIntentBits.GuildMessages,
@@ -29,34 +29,30 @@ export class Bot<Ready extends boolean = boolean> {
         this.setupEventListeners();
     }
 
-    public get client(): Client<Ready> {
-        return this._client as never;
-    }
-
     public isReady(): this is Bot<true> {
-        return this._client.isReady();
+        return this.client.isReady();
     }
 
     public async start(): Promise<void> {
-        await this._client.login(config.token);
+        await this.client.login(config.token);
     }
 
     public async stop(): Promise<boolean> {
         if (this._terminating) return false;
         this._terminating = true;
         logger.info("Stopping bot...");
-        await this._client.destroy();
+        await this.client.destroy();
         logger.info("Bot has been stopped.");
         return true;
     }
 
     private setupEventListeners(): void {
-        this._client.on(Events.ClientReady, (client) => {
+        this.client.on(Events.ClientReady, (client) => {
             this.handleReady(client).catch((error: unknown) => {
                 logger.error(error, "Failed to handle ready event");
             });
         });
-        this._client.on("interactionCreate", (interaction) => {
+        this.client.on("interactionCreate", (interaction) => {
             this.handleInteraction(interaction)
                 .catch((error: unknown) => this.handleInteractionError(interaction, error))
                 .catch((error: unknown) => {
@@ -79,7 +75,7 @@ export class Bot<Ready extends boolean = boolean> {
 
         try {
             await rest.put(
-                Routes.applicationCommands(this._client.user!.id),
+                Routes.applicationCommands(this.client.user!.id),
                 { body: commandData },
             );
             logger.info("Successfully registered application commands.");
