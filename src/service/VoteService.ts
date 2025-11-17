@@ -264,8 +264,8 @@ export class VoteService implements BotService {
     };
 
     private async getReactions(reactions: ReactionManager, emoji: MessageReactionResolvable): Promise<Collection<string, User>> {
-        return reactions.resolve(emoji)?.users.fetch().then((data) => data.filter((user) => !user.bot))
-            ?? new Collection();
+        return reactions.resolve(emoji)?.users.fetch()
+            .then((data) => data.filter((user) => !user.bot)) ?? new Collection();
     }
 
     private formatVotes(votes: Collection<string, User>): string {
