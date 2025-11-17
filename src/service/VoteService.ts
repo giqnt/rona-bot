@@ -227,7 +227,7 @@ export class VoteService implements BotService {
         const channel = await guild.channels.fetch(channelId);
         if (channel == null || !channel.isSendable()) return;
         const message = await channel.messages.fetch(messageId);
-
+        await message.fetch();
         const yesVotes = this.getReactions(message.reactions, config.vote.emoji.yes);
         const noVotes = this.getReactions(message.reactions, config.vote.emoji.no);
         const accepted = yesVotes.size >= config.vote.requiredYesVotes && yesVotes.size > noVotes.size;
