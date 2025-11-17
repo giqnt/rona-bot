@@ -244,7 +244,7 @@ export class VoteService implements BotService {
     private async perform(voteData: VoteData, guild: Guild): Promise<void> {
         const target = await guild.members.fetch(voteData.targetUserId);
         if ("name" in voteData) {
-            if (!target.moderatable) return;
+            if (!target.manageable) return;
             await target.setNickname(voteData.name);
         } else {
             const roleId = voteData.roleId;
