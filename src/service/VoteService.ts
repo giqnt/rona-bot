@@ -228,8 +228,8 @@ export class VoteService implements BotService {
         if (channel == null || !channel.isSendable()) return;
         const message = await channel.messages.fetch(messageId);
         await message.fetch();
-        const yesVotes = this.getReactions(message.reactions, config.vote.emoji.yes);
-        const noVotes = this.getReactions(message.reactions, config.vote.emoji.no);
+        const yesVotes = await this.getReactions(message.reactions, config.vote.emoji.yes);
+        const noVotes = await this.getReactions(message.reactions, config.vote.emoji.no);
         const accepted = yesVotes.size >= config.vote.requiredYesVotes && yesVotes.size > noVotes.size;
         const resultString = [
             bold(`결과: ${underline(accepted ? "통과" : "부결")}`),
@@ -263,8 +263,9 @@ export class VoteService implements BotService {
         }
     };
 
-    private getReactions(reactions: ReactionManager, emoji: MessageReactionResolvable): Collection<string, User> {
-        return reactions.resolve(emoji)?.users.cache.filter((user) => !user.bot) ?? new Collection();
+    private async getReactions(reactions: ReactionManager, emoji: MessageReactionResolvable): Promise<Collection<string, User>> {
+        return reactions.resolve(emoji)?.users.fetch().then((data) => data.filter((user) => !user.bot))
+            ?? new Collection();
     }
 
     private formatVotes(votes: Collection<string, User>): string {
