@@ -44,6 +44,9 @@ export default defineSlashCommand({
         if (target == null) {
             throw new UserError("해당 유저는 이 서버에 존재하지 않아요.");
         }
+        if (target.user.bot) {
+            throw new UserError("봇을 대상으로는 투표를 할 수 없어요.");
+        }
 
         await interaction.deferReply({ flags: ["Ephemeral"] });
 
