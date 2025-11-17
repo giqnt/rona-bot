@@ -61,9 +61,6 @@ export default defineSlashCommand({
         const subCommand = interaction.options.getSubcommand(true);
         if (subCommand === "이름") {
             const name = interaction.options.getString("이름", true);
-            if (name.includes("`")) {
-                throw new UserError("이름에는 `가 포함될 수 없어요.");
-            }
             await bot.services.vote.bumpCooldown(interaction.member);
             const result = await bot.services.vote.startVote({
                 type: "name",

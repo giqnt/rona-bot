@@ -147,6 +147,15 @@ export class VoteService implements BotService {
     }
 
     public async startVote(options: StartVoteOptions): Promise<StartVoteResult> {
+        if (options.type === "name") {
+            if (options.name.includes("`")) {
+                throw new UserError("이름에는 `가 포함될 수 없어요.");
+            }
+            if (options.name.length > 32) {
+                throw new UserError("이름은 32자 이내여야 해요.");
+            }
+        }
+
         const guild = options.target.guild;
         const [guildData] = await db.select().from(guildsTable).where(eq(guildsTable.id, guild.id));
         if (guildData?.voteChannelId == null) {
