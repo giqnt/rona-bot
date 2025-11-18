@@ -23,6 +23,6 @@ export const config = {
         },
         cooldownMs: 30 * 60 * 1000, // 30 minutes
         expirationTimeMs: 5 * 60 * 1000, // 5 minutes
-        requiredYesVotes: 1,
+        requiredYesVotes: 3,
     },
 };
