@@ -228,13 +228,13 @@ export class VoteService implements BotService {
         if (channel == null || !channel.isSendable()) return;
         const message = await channel.messages.fetch(messageId);
         await message.fetch();
-        const yesVotes = await this.getReactions(message.reactions, config.vote.emoji.yes);
-        const noVotes = await this.getReactions(message.reactions, config.vote.emoji.no);
+        const yesVotes = await this.getReactionVotes(message.reactions, config.vote.emoji.yes);
+        const noVotes = await this.getReactionVotes(message.reactions, config.vote.emoji.no);
         const accepted = yesVotes.size >= config.vote.requiredYesVotes && yesVotes.size > noVotes.size;
         const resultString = [
             bold(`결과: ${underline(accepted ? "통과" : "부결")}`),
-            `-# 찬성: ${this.formatVotes(yesVotes)}`,
-            `-# 반대: ${this.formatVotes(noVotes)}`,
+            `-# 찬성(${yesVotes.size}): ${this.formatVotes(yesVotes)}`,
+            `-# 반대(${noVotes.size}): ${this.formatVotes(noVotes)}`,
         ].join("\n");
         await message.edit(`${strikethrough(message.content)}\n${resultString}`);
         if (!accepted) return;
@@ -263,14 +263,16 @@ export class VoteService implements BotService {
         }
     };
 
-    private async getReactions(reactions: ReactionManager, emoji: MessageReactionResolvable): Promise<Collection<string, User>> {
+    private async getReactionVotes(
+        reactions: ReactionManager,
+        emoji: MessageReactionResolvable,
+    ): Promise<Collection<string, User>> {
         return reactions.resolve(emoji)?.users.fetch()
             .then((data) => data.filter((user) => !user.bot)) ?? new Collection();
     }
 
     private formatVotes(votes: Collection<string, User>): string {
-        const filtered = votes.filter((user) => !user.bot);
-        if (filtered.size === 0) return "(없음)";
-        return filtered.map((user) => userMention(user.id)).join(" ");
+        if (votes.size === 0) return "(없음)";
+        return votes.map((user) => userMention(user.id)).join(" ");
     }
 }
